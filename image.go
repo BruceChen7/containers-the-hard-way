@@ -3,22 +3,23 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/go-containerregistry/pkg/crane"
-	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/google/go-containerregistry/pkg/crane"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 )
 
 type manifest []struct {
-	Config string
+	Config   string
 	RepoTags []string
-	Layers []string
+	Layers   []string
 }
 type imageConfigDetails struct {
-	Env []string	`json:"Env"`
-	Cmd []string	`json:"Cmd"`
+	Env []string `json:"Env"`
+	Cmd []string `json:"Cmd"`
 }
 type imageConfig struct {
 	Config imageConfigDetails `json:"config"`
@@ -67,7 +68,7 @@ func deleteTempImageFiles(imageShaHash string) {
 func getImageAndTagForHash(imageShaHash string) (string, string) {
 	idb := imagesDB{}
 	parseImagesMetadata(&idb)
-	for image,versions := range idb {
+	for image, versions := range idb {
 		for version, hash := range versions {
 			if hash == imageShaHash {
 				return image, version
@@ -108,7 +109,7 @@ func imageExistByTag(imgName string, tagName string) (bool, string) {
 func downloadImage(img v1.Image, imageShaHex string, src string) {
 	path := getGockerTempPath() + "/" + imageShaHex
 	os.Mkdir(path, 0755)
-	path +="/package.tar"
+	path += "/package.tar"
 	/* Save the image as a tar file */
 	if err := crane.SaveLegacy(img, src, path); err != nil {
 		log.Fatalf("saving tarball %s: %v", path, err)
@@ -146,7 +147,7 @@ func processLayerTarballs(imageShaHex string, fullImageHex string) {
 		log.Printf("Uncompressing layer to: %s \n", imageLayerDir)
 		_ = os.MkdirAll(imageLayerDir, 0755)
 		srcLayer := tmpPathDir + "/" + layer
-		if err:= untar(srcLayer, imageLayerDir); err != nil {
+		if err := untar(srcLayer, imageLayerDir); err != nil {
 			log.Fatalf("Unable to untar layer file: %s: %v\n", srcLayer, err)
 		}
 	}
@@ -168,7 +169,7 @@ func parseContainerConfig(imageShaHex string) imageConfig {
 	return imgConfig
 }
 
-func parseImagesMetadata(idb *imagesDB)  {
+func parseImagesMetadata(idb *imagesDB) {
 	imagesDBPath := getGockerImagesPath() + "/" + "images.json"
 	if _, err := os.Stat(imagesDBPath); os.IsNotExist(err) {
 		/* If it doesn't exist create an empty DB */
@@ -242,13 +243,13 @@ func deleteImageByHash(imageShaHex string) {
 		log.Fatalf("Unable to get running containers list: %v\n", err)
 	}
 	for _, container := range containers {
-		if container.image == imgName + ":" + imgTag {
+		if container.image == imgName+":"+imgTag {
 			log.Fatalf("Cannot delete image becuase it is in use by: %s",
-						container.containerId)
+				container.containerId)
 		}
 	}
 
-	doOrDieWithMsg(os.RemoveAll(getGockerImagesPath() + "/" + imageShaHex),
+	doOrDieWithMsg(os.RemoveAll(getGockerImagesPath()+"/"+imageShaHex),
 		"Unable to remove image directory")
 	removeImageMetadata(imageShaHex)
 }
@@ -312,4 +313,3 @@ func downloadImageIfRequired(src string) string {
 		return imageShaHex
 	}
 }
-
